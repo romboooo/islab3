@@ -9,6 +9,7 @@ import java.util.Set;
 
 @ApplicationPath("/api")
 public class JAXRSConfiguration extends Application {
+
     @Override
     public Set<Class<?>> getClasses() {
         Set<Class<?>> classes = new HashSet<>();
@@ -16,9 +17,7 @@ public class JAXRSConfiguration extends Application {
         classes.add(com.example.rest.PersonResource.class);
         classes.add(com.example.rest.ImportResource.class);
         classes.add(com.example.HelloResource.class);
-
         classes.add(MultiPartFeature.class);
-
         return classes;
     }
 }
