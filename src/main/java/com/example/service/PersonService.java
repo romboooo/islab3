@@ -7,6 +7,7 @@ import com.example.entity.Person;
 import com.example.entity.Color;
 import com.example.entity.Country;
 import com.example.entity.Location;
+import com.example.interceptor.CacheStatsLogging;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Stateless
+@CacheStatsLogging
 public class PersonService {
 
     @Inject

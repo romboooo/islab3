@@ -3,11 +3,39 @@ package com.example.entity;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import org.eclipse.persistence.annotations.Cache;
+import org.eclipse.persistence.annotations.CacheCoordinationType;
+import org.eclipse.persistence.annotations.CacheType;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "dragon")
+@Cacheable(true)
+@Cache(
+        type = CacheType.SOFT,
+        size = 100,
+        expiry = 600000,
+        coordinationType = CacheCoordinationType.INVALIDATE_CHANGED_OBJECTS
+)
+@NamedQueries({
+        @NamedQuery(
+                name = "Dragon.findAll",
+                query = "SELECT d FROM Dragon d ORDER BY d.id",
+                hints = {
+                        @QueryHint(name = "eclipselink.query-results-cache", value = "true"),
+                        @QueryHint(name = "eclipselink.query-results-cache.expiry", value = "600000") // 10 минут
+                }
+        ),
+        @NamedQuery(
+                name = "Dragon.findByName",
+                query = "SELECT d FROM Dragon d WHERE d.name LIKE :name",
+                hints = {
+                        @QueryHint(name = "eclipselink.query-results-cache", value = "true")
+                }
+        )
+})
 public class Dragon {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dragon_seq")
     @SequenceGenerator(name = "dragon_seq", sequenceName = "dragon_id_seq", allocationSize = 1)
@@ -70,37 +98,26 @@ public class Dragon {
         }
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
     public Coordinates getCoordinates() { return coordinates; }
     public void setCoordinates(Coordinates coordinates) { this.coordinates = coordinates; }
-
     public LocalDateTime getCreationDate() { return creationDate; }
     public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
-
     public DragonCave getCave() { return cave; }
     public void setCave(DragonCave cave) { this.cave = cave; }
-
     public Person getKiller() { return killer; }
     public void setKiller(Person killer) { this.killer = killer; }
-
     public long getAge() { return age; }
     public void setAge(long age) { this.age = age; }
-
     public Float getWeight() { return weight; }
     public void setWeight(Float weight) { this.weight = weight; }
-
     public Color getColor() { return color; }
     public void setColor(Color color) { this.color = color; }
-
     public DragonCharacter getCharacter() { return character; }
     public void setCharacter(DragonCharacter character) { this.character = character; }
-
     public DragonHead getHead() { return head; }
     public void setHead(DragonHead head) { this.head = head; }
 }

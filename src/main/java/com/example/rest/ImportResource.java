@@ -25,7 +25,6 @@ public class ImportResource {
         try {
             ImportHistory importHistory = importService.importDragonsFromJson(fileInputStream, filename);
 
-            // Краткие сообщения для клиента
             String message;
             if (importHistory.getStatus() == com.example.entity.ImportStatus.SUCCESS) {
                 message = "Import successful. Check import history for details.";

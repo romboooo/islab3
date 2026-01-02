@@ -16,6 +16,7 @@ public class JAXRSConfiguration extends Application {
         classes.add(com.example.rest.DragonResource.class);
         classes.add(com.example.rest.PersonResource.class);
         classes.add(com.example.rest.ImportResource.class);
+        classes.add(com.example.rest.CacheResource.class);
         classes.add(com.example.HelloResource.class);
         classes.add(MultiPartFeature.class);
         return classes;

@@ -5,6 +5,7 @@ import com.example.dao.PersonDao;
 import com.example.dto.DragonDto;
 import com.example.entity.Dragon;
 import com.example.entity.Person;
+import com.example.interceptor.CacheStatsLogging;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Stateless
+@CacheStatsLogging
 public class DragonService {
 
     @Inject

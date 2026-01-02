@@ -5,6 +5,7 @@ import com.example.dao.ImportHistoryDao;
 import com.example.dto.DragonDto;
 import com.example.entity.ImportHistory;
 import com.example.entity.ImportStatus;
+import com.example.interceptor.CacheStatsLogging;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @Stateless
+@CacheStatsLogging
 public class ImportService {
 
     @Inject

@@ -4,10 +4,29 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.eclipse.persistence.annotations.Cache;
+import org.eclipse.persistence.annotations.CacheType;
 
 @Entity
 @Table(name = "person")
+@Cacheable(true)
+@Cache(
+        type = CacheType.SOFT,
+        size = 50,
+        expiry = 300000                  // 5 минут
+)
+@NamedQueries({
+        @NamedQuery(
+                name = "Person.findAll",
+                query = "SELECT p FROM Person p ORDER BY p.id",
+                hints = {
+                        @QueryHint(name = "eclipselink.query-results-cache", value = "true"),
+                        @QueryHint(name = "eclipselink.query-results-cache.expiry", value = "300000") // 5 минут
+                }
+        )
+})
 public class Person {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "person_seq")
     @SequenceGenerator(name = "person_seq", sequenceName = "person_id_seq", allocationSize = 1)
@@ -49,22 +68,16 @@ public class Person {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
     public Color getEyeColor() { return eyeColor; }
     public void setEyeColor(Color eyeColor) { this.eyeColor = eyeColor; }
-
     public Color getHairColor() { return hairColor; }
     public void setHairColor(Color hairColor) { this.hairColor = hairColor; }
-
     public Location getLocation() { return location; }
     public void setLocation(Location location) { this.location = location; }
-
     public String getPassportID() { return passportID; }
     public void setPassportID(String passportID) { this.passportID = passportID; }
-
     public Country getNationality() { return nationality; }
     public void setNationality(Country nationality) { this.nationality = nationality; }
 }
