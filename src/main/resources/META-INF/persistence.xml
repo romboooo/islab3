@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+    <persistence-unit name="myPU" transaction-type="JTA">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+        <jta-data-source>jdbc/__default</jta-data-source>
+
+        <class>com.example.entity.Dragon</class>
+        <class>com.example.entity.Person</class>
+        <class>com.example.entity.Coordinates</class>
+        <class>com.example.entity.DragonCave</class>
+        <class>com.example.entity.DragonHead</class>
+        <class>com.example.entity.Location</class>
+        <class>com.example.entity.ImportHistory</class>
+        <class>com.example.entity.Color</class>
+        <class>com.example.entity.Country</class>
+        <class>com.example.entity.DragonCharacter</class>
+        <class>com.example.entity.ImportStatus</class>
+
+        <properties>
+            <property name="jakarta.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/>
+            <property name="eclipselink.cache.shared.default" value="true"/>
+            <property name="eclipselink.cache.type.default" value="SoftWeak"/>
+            <property name="eclipselink.cache.size.default" value="1000"/>
+            <property name="eclipselink.cache.default-expiry" value="600000"/>
+            <property name="eclipselink.cache.statistics" value="true"/>
+            <property name="eclipselink.query-results-cache" value="true"/>
+            <property name="eclipselink.query-results-cache.expiry" value="300000"/>
+            <property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
+            <property name="eclipselink.logging.level" value="INFO"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
+            <property name="eclipselink.target-database" value="PostgreSQL"/>
+            <property name="eclipselink.target-server" value="org.eclipse.persistence.platform.server.jta.JTATransactionController"/>
+            <property name="eclipselink.cache.shared" value="true"/>
+            <property name="eclipselink.cache.type" value="Full"/>
+            <property name="eclipselink.deploy-on-startup" value="false"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both"/>
+        </properties>
+    </persistence-unit>
+</persistence>

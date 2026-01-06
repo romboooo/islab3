@@ -6,15 +6,17 @@ import com.example.dto.DragonDto;
 import com.example.entity.ImportHistory;
 import com.example.entity.ImportStatus;
 import com.example.interceptor.CacheStatsLogging;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,13 +39,16 @@ public class ImportService {
     @Inject
     private Validator validator;
 
+    @Inject
+    private MinioService minioService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ImportService() {
         objectMapper.registerModule(new JavaTimeModule());
     }
 
-    public ImportHistory importDragonsFromJson(InputStream fileInputStream, String filename) {
+    public ImportHistory importDragonsFromJson(InputStream fileInputStream, String filename, long fileSize) {
         ImportHistory importHistory = new ImportHistory(
                 LocalDateTime.now(),
                 ImportStatus.IN_PROGRESS,
@@ -57,7 +62,21 @@ public class ImportService {
         boolean hasFatalError = false;
 
         try {
-            JsonNode rootNode = objectMapper.readTree(fileInputStream);
+            byte[] fileContent = fileInputStream.readAllBytes();
+
+            String objectKey = minioService.uploadFile(
+                    fileContent,
+                    filename,
+                    "application/json"
+            );
+
+            String fileUrl = minioService.getFileUrl(objectKey);
+            importHistory.setFileSize(fileSize);
+            importHistory.setFileObjectKey(objectKey);
+            importHistory.setFileUrl(fileUrl);
+            importHistoryDao.save(importHistory);
+
+            JsonNode rootNode = objectMapper.readTree(new ByteArrayInputStream(fileContent));
 
             if (!rootNode.isArray()) {
                 throw new IllegalArgumentException("JSON должен быть массивом объектов");
@@ -148,6 +167,24 @@ public class ImportService {
         }
 
         return importHistoryDao.save(importHistory);
+    }
+
+    public byte[] getImportFile(Long importId) throws Exception {
+        ImportHistory importHistory = importHistoryDao.findById(importId);
+        if (importHistory == null || importHistory.getFileObjectKey() == null) {
+            throw new FileNotFoundException("File not found for import id: " + importId);
+        }
+
+        return minioService.downloadFile(importHistory.getFileObjectKey());
+    }
+
+    public MinioService.FileMetadata getImportFileMetadata(Long importId) throws Exception {
+        ImportHistory importHistory = importHistoryDao.findById(importId);
+        if (importHistory == null || importHistory.getFileObjectKey() == null) {
+            throw new FileNotFoundException("File not found for import id: " + importId);
+        }
+
+        return minioService.getFileMetadata(importHistory.getFileObjectKey());
     }
 
     public List<ImportHistory> getImportHistory() {

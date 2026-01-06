@@ -13,7 +13,7 @@ import org.eclipse.persistence.annotations.CacheType;
 @Cache(
         type = CacheType.SOFT,
         size = 50,
-        expiry = 300000                  // 5 минут
+        expiry = 300000
 )
 @NamedQueries({
         @NamedQuery(

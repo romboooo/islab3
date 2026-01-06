@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dragon & Person Management System</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .form-group { margin: 10px 0; }
+        label { display: inline-block; width: 150px; }
+        input, select { width: 200px; padding: 5px; }
+        .nested { margin-left: 20px; border-left: 2px solid #eee; padding-left: 10px; }
+        .error { color: red; font-size: 12px; }
+        .success { color: green; font-size: 12px; }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+        .tab { cursor: pointer; padding: 10px; background: #f0f0f0; margin: 5px; display: inline-block; }
+        .tab.active { background: #ddd; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .message { margin: 10px 0; padding: 10px; }
+    </style>
+</head>
+<body>
+<h1>Dragon Management System</h1>
+
+<div>
+    <div class="tab active" onclick="switchTab('dragons')">Dragons</div>
+    <div class="tab" onclick="switchTab('persons')">Persons</div>
+    <div class="tab" onclick="switchTab('special')">Special Operations</div>
+    <div class="tab" onclick="switchTab('import')">Import</div>
+</div>
+
+<div id="dragons" class="tab-content active">
+    <h2>Dragons Management</h2>
+
+    <div class="section">
+        <h3 id="dragonFormTitle">Create New Dragon</h3>
+        <form id="dragonForm">
+            <input type="hidden" id="dragonId">
+
+            <div class="form-group">
+                <label for="dragonName">Name *:</label>
+                <input type="text" id="dragonName" required>
+            </div>
+
+            <div class="nested">
+                <h4>Coordinates *</h4>
+                <div class="form-group">
+                    <label for="coordX">X:</label>
+                    <input type="number" id="coordX" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="coordY">Y *:</label>
+                    <input type="number" id="coordY" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="dragonAge">Age *:</label>
+                <input type="number" id="dragonAge" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dragonWeight">Weight *:</label>
+                <input type="number" id="dragonWeight" step="0.1" min="0.1" required>
+            </div>
+
+            <div class="nested">
+                <h4>Dragon Cave</h4>
+                <div class="form-group">
+                    <label for="caveTreasures">Treasures Count:</label>
+                    <input type="number" id="caveTreasures" min="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="dragonColor">Color:</label>
+                <select id="dragonColor">
+                    <option value="">Select Color</option>
+                    <option value="BLUE">BLUE</option>
+                    <option value="YELLOW">YELLOW</option>
+                    <option value="ORANGE">ORANGE</option>
+                    <option value="WHITE">WHITE</option>
+                    <option value="BROWN">BROWN</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="dragonCharacter">Character:</label>
+                <select id="dragonCharacter">
+                    <option value="">Select Character</option>
+                    <option value="CUNNING">CUNNING</option>
+                    <option value="EVIL">EVIL</option>
+                    <option value="GOOD">GOOD</option>
+                    <option value="CHAOTIC">CHAOTIC</option>
+                    <option value="CHAOTIC_EVIL">CHAOTIC_EVIL</option>
+                </select>
+            </div>
+
+            <div class="nested">
+                <h4>Dragon Head</h4>
+                <div class="form-group">
+                    <label for="headToothCount">Tooth Count:</label>
+                    <input type="number" id="headToothCount" step="0.1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="dragonKiller">Killer (Person ID):</label>
+                <input type="number" id="dragonKiller">
+            </div>
+
+            <button type="submit" id="dragonSubmit">Create Dragon</button>
+            <button type="button" onclick="resetDragonForm()">Cancel</button>
+            <div id="dragonMessage" class="message"></div>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>Dragons List</h3>
+
+        <div class="form-group">
+            <label for="filterName">Filter by Name:</label>
+            <input type="text" id="filterName" onchange="loadDragons()">
+            <label for="pageSize">Page Size:</label>
+            <select id="pageSize" onchange="loadDragons()">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+        <button onclick="loadDragons()">Load Dragons</button>
+
+        <div id="dragonsList"></div>
+        <div id="pagination"></div>
+    </div>
+</div>
+
+<div id="persons" class="tab-content">
+    <h2>Persons Management</h2>
+
+    <div class="section">
+        <h3 id="personFormTitle">Create New Person</h3>
+        <form id="personForm">
+            <input type="hidden" id="personId">
+
+            <div class="form-group">
+                <label for="personName">Name *:</label>
+                <input type="text" id="personName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="personEyeColor">Eye Color:</label>
+                <select id="personEyeColor">
+                    <option value="">Select Eye Color</option>
+                    <option value="BLUE">BLUE</option>
+                    <option value="YELLOW">YELLOW</option>
+                    <option value="ORANGE">ORANGE</option>
+                    <option value="WHITE">WHITE</option>
+                    <option value="BROWN">BROWN</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="personHairColor">Hair Color *:</label>
+                <select id="personHairColor" required>
+                    <option value="">Select Hair Color</option>
+                    <option value="BLUE">BLUE</option>
+                    <option value="YELLOW">YELLOW</option>
+                    <option value="ORANGE">ORANGE</option>
+                    <option value="WHITE">WHITE</option>
+                    <option value="BROWN">BROWN</option>
+                </select>
+            </div>
+
+            <div class="nested">
+                <h4>Location *</h4>
+                <div class="form-group">
+                    <label for="locationX">X:</label>
+                    <input type="number" id="locationX" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="locationY">Y:</label>
+                    <input type="number" id="locationY" step="0.1" value="0.0">
+                </div>
+                <div class="form-group">
+                    <label for="locationZ">Z:</label>
+                    <input type="number" id="locationZ" value="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="personPassportID">Passport ID *:</label>
+                <input type="text" id="personPassportID" minlength="8" required>
+            </div>
+
+            <div class="form-group">
+                <label for="personNationality">Nationality:</label>
+                <select id="personNationality">
+                    <option value="">Select Nationality</option>
+                    <option value="UNITED_KINGDOM">UNITED_KINGDOM</option>
+                    <option value="FRANCE">FRANCE</option>
+                    <option value="ITALY">ITALY</option>
+                </select>
+            </div>
+
+            <button type="submit" id="personSubmit">Create Person</button>
+            <button type="button" onclick="resetPersonForm()">Cancel</button>
+            <div id="personMessage" class="message"></div>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>Persons List</h3>
+        <button onclick="loadPersons()">Load Persons</button>
+        <div id="personsList"></div>
+    </div>
+</div>
+
+<div id="special" class="tab-content">
+    <h2>Special Operations</h2>
+
+    <div class="section">
+        <h3>Dragon Statistics</h3>
+        <button onclick="getSumOfAges()">Get Sum of Dragons Ages</button>
+        <button onclick="getUniqueAges()">Get Unique Dragons Ages</button>
+
+        <div class="form-group">
+            <label for="weightFilter">Dragons heavier than:</label>
+            <input type="number" id="weightFilter" step="0.1" value="100">
+            <button onclick="getDragonsByWeight()">Find Dragons</button>
+        </div>
+
+        <div id="specialResults"></div>
+    </div>
+</div>
+
+<div id="import" class="tab-content">
+    <h2>Mass Import</h2>
+
+    <div class="section">
+        <h3>Import Dragons from JSON</h3>
+        <form id="importForm">
+            <div class="form-group">
+                <label for="jsonFile">Select JSON file:</label>
+                <input type="file" id="jsonFile" accept=".json" required>
+            </div>
+            <button type="submit">Import Dragons</button>
+        </form>
+        <div id="importMessage" class="message"></div>
+    </div>
+
+    <div class="section">
+        <h3>Import Template</h3>
+        <p>Download JSON template for import:</p>
+        <button onclick="downloadTemplate()">Download Template</button>
+        <pre id="jsonTemplate" style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin-top: 10px; display: none;">
+[
+  {
+    "name": "Firestorm",
+    "coordinates": {
+      "x": 100,
+      "y": 200
+    },
+    "age": 150,
+    "weight": 2500.5,
+    "color": "BLUE",
+    "character": "EVIL",
+    "cave": {
+      "numberOfTreasures": 50
+    },
+    "head": {
+      "toothCount": 45.5
+    }
+  },
+  {
+    "name": "Icewing",
+    "coordinates": {
+      "x": -50,
+      "y": 300
+    },
+    "age": 200,
+    "weight": 1800.0,
+    "color": "WHITE",
+    "character": "GOOD",
+    "cave": {
+      "numberOfTreasures": 30
+    }
+  }
+]
+        </pre>
+    </div>
+
+    <div class="section">
+        <h3>Import History</h3>
+        <button onclick="loadImportHistory()">Refresh History</button>
+        <div id="importHistory"></div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/lab3/api';
+    let currentDragonPage = 1;
+    let totalDragonPages = 1;
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+
+        if (tabName === 'import') {
+            loadImportHistory();
+        }
+    }
+
+    async function loadDragons(page = 1) {
+        try {
+            currentDragonPage = page;
+            const pageSize = document.getElementById('pageSize').value;
+            const nameFilter = document.getElementById('filterName').value;
+
+            let url = `${API_BASE}/dragons?page=${page}&size=${pageSize}`;
+            if (nameFilter) {
+                url += `&name=${encodeURIComponent(nameFilter)}`;
+            }
+
+            const response = await fetch(url);
+            const result = await response.json();
+
+            displayDragons(result.data);
+            updatePagination(result.total, pageSize, page);
+        } catch (error) {
+            console.error('Error loading dragons:', error);
+            showMessage('dragonMessage', 'Error loading dragons: ' + error.message, 'error');
+        }
+    }
+
+    function displayDragons(dragons) {
+        const container = document.getElementById('dragonsList');
+        if (!dragons || dragons.length === 0) {
+            container.innerHTML = '<p>No dragons found</p>';
+            return;
+        }
+
+        container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Weight</th>
+                    <th>Color</th>
+                    <th>Character</th>
+                    <th>Killer ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${dragons.map(dragon => `
+                    <tr>
+                        <td>${dragon.id}</td>
+                        <td>${dragon.name}</td>
+                        <td>${dragon.age}</td>
+                        <td>${dragon.weight}</td>
+                        <td>${dragon.color || '-'}</td>
+                        <td>${dragon.character || '-'}</td>
+                        <td>${dragon.killer ? dragon.killer.id : 'None'}</td>
+                        <td>
+                            <button onclick="editDragon(${dragon.id})">Edit</button>
+                            <button onclick="deleteDragon(${dragon.id})"
+                                    ${dragon.killer ? 'disabled style="opacity: 0.5;" title="Cannot delete - this dragon has a killer"' : ''}>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    }
+
+    function updatePagination(total, pageSize, currentPage) {
+        totalDragonPages = Math.ceil(total / pageSize);
+        const pagination = document.getElementById('pagination');
+
+        let html = '';
+        if (currentPage > 1) {
+            html += `<button onclick="loadDragons(${currentPage - 1})">Previous</button> `;
+        }
+
+        html += `Page ${currentPage} of ${totalDragonPages}`;
+
+        if (currentPage < totalDragonPages) {
+            html += ` <button onclick="loadDragons(${currentPage + 1})">Next</button>`;
+        }
+
+        pagination.innerHTML = html;
+    }
+
+    document.getElementById('dragonForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const dragonData = {
+            name: document.getElementById('dragonName').value,
+            coordinates: {
+                x: parseInt(document.getElementById('coordX').value),
+                y: parseInt(document.getElementById('coordY').value)
+            },
+            age: parseInt(document.getElementById('dragonAge').value),
+            weight: parseFloat(document.getElementById('dragonWeight').value),
+            color: document.getElementById('dragonColor').value || null,
+            character: document.getElementById('dragonCharacter').value || null
+        };
+
+        const caveTreasures = document.getElementById('caveTreasures').value;
+        if (caveTreasures) {
+            dragonData.cave = { numberOfTreasures: parseInt(caveTreasures) };
+        }
+
+        const headToothCount = document.getElementById('headToothCount').value;
+        if (headToothCount) {
+            dragonData.head = { toothCount: parseFloat(headToothCount) };
+        }
+
+        const killerId = document.getElementById('dragonKiller').value;
+        if (killerId) {
+            dragonData.killer = { id: parseInt(killerId) };
+        }
+
+        const dragonId = document.getElementById('dragonId').value;
+        const url = dragonId ? `${API_BASE}/dragons/${dragonId}` : `${API_BASE}/dragons`;
+        const method = dragonId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dragonData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showMessage('dragonMessage', `Dragon ${dragonId ? 'updated' : 'created'} successfully!`, 'success');
+                resetDragonForm();
+                loadDragons(currentDragonPage);
+            } else {
+                const error = await response.json();
+                showMessage('dragonMessage', `Error: ${error.error || response.statusText}`, 'error');
+            }
+        } catch (error) {
+            showMessage('dragonMessage', 'Error: ' + error.message, 'error');
+        }
+    });
+
+    async function editDragon(id) {
+        try {
+            const response = await fetch(`${API_BASE}/dragons/${id}`);
+            const dragon = await response.json();
+
+            document.getElementById('dragonId').value = dragon.id;
+            document.getElementById('dragonName').value = dragon.name;
+            document.getElementById('coordX').value = dragon.coordinates.x;
+            document.getElementById('coordY').value = dragon.coordinates.y;
+            document.getElementById('dragonAge').value = dragon.age;
+            document.getElementById('dragonWeight').value = dragon.weight;
+            document.getElementById('dragonColor').value = dragon.color || '';
+            document.getElementById('dragonCharacter').value = dragon.character || '';
+            document.getElementById('caveTreasures').value = dragon.cave?.numberOfTreasures || '';
+            document.getElementById('headToothCount').value = dragon.head?.toothCount || '';
+            document.getElementById('dragonKiller').value = dragon.killer?.id || '';
+
+            document.getElementById('dragonFormTitle').textContent = 'Edit Dragon';
+            document.getElementById('dragonSubmit').textContent = 'Update Dragon';
+
+            document.getElementById('dragons').scrollIntoView();
+        } catch (error) {
+            showMessage('dragonMessage', 'Error loading dragon: ' + error.message, 'error');
+        }
+    }
+
+    async function deleteDragon(id) {
+        try {
+            const response = await fetch(`${API_BASE}/dragons/${id}`);
+            const dragon = await response.json();
+
+            if (dragon.killer) {
+                alert('Cannot delete this dragon because it has a killer assigned.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this dragon?')) return;
+
+            const deleteResponse = await fetch(`${API_BASE}/dragons/${id}`, { method: 'DELETE' });
+            if (deleteResponse.ok) {
+                showMessage('dragonMessage', 'Dragon deleted successfully!', 'success');
+                loadDragons(currentDragonPage);
+            } else {
+                const error = await deleteResponse.json();
+                showMessage('dragonMessage', `Error: ${error.error || deleteResponse.statusText}`, 'error');
+            }
+        } catch (error) {
+            showMessage('dragonMessage', 'Error deleting dragon: ' + error.message, 'error');
+        }
+    }
+
+    function resetDragonForm() {
+        document.getElementById('dragonForm').reset();
+        document.getElementById('dragonId').value = '';
+        document.getElementById('dragonFormTitle').textContent = 'Create New Dragon';
+        document.getElementById('dragonSubmit').textContent = 'Create Dragon';
+        document.getElementById('dragonMessage').innerHTML = '';
+    }
+
+    async function loadPersons() {
+        try {
+            const response = await fetch(`${API_BASE}/persons`);
+            const persons = await response.json();
+            displayPersons(persons);
+        } catch (error) {
+            console.error('Error loading persons:', error);
+            showMessage('personMessage', 'Error loading persons: ' + error.message, 'error');
+        }
+    }
+
+    async function displayPersons(persons) {
+        const container = document.getElementById('personsList');
+        if (!persons || persons.length === 0) {
+            container.innerHTML = '<p>No persons found</p>';
+            return;
+        }
+
+        const dragonsResponse = await fetch(`${API_BASE}/dragons?size=1000`);
+        const dragonsResult = await dragonsResponse.json();
+        const allDragons = dragonsResult.data || [];
+
+        const personsWithKillerStatus = persons.map(person => {
+            const isKiller = allDragons.some(dragon =>
+                dragon.killer && dragon.killer.id === person.id
+            );
+
+            return {
+                ...person,
+                isKiller: isKiller
+            };
+        });
+
+        container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Eye Color</th>
+                    <th>Hair Color</th>
+                    <th>Passport ID</th>
+                    <th>Nationality</th>
+                    <th>Is Killer</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${personsWithKillerStatus.map(person => `
+                    <tr>
+                        <td>${person.id}</td>
+                        <td>${person.name}</td>
+                        <td>${person.eyeColor || '-'}</td>
+                        <td>${person.hairColor}</td>
+                        <td>${person.passportID}</td>
+                        <td>${person.nationality || '-'}</td>
+                        <td>${person.isKiller ? 'Yes' : 'No'}</td>
+                        <td>
+                            <button onclick="editPerson(${person.id})">Edit</button>
+                            <button onclick="deletePerson(${person.id})"
+                                    ${person.isKiller ? 'disabled style="opacity: 0.5;"' : ''}>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    }
+
+    document.getElementById('personForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const personData = {
+            name: document.getElementById('personName').value,
+            eyeColor: document.getElementById('personEyeColor').value || null,
+            hairColor: document.getElementById('personHairColor').value,
+            location: {
+                x: parseInt(document.getElementById('locationX').value),
+                y: parseFloat(document.getElementById('locationY').value),
+                z: parseInt(document.getElementById('locationZ').value)
+            },
+            passportID: document.getElementById('personPassportID').value,
+            nationality: document.getElementById('personNationality').value || null
+        };
+
+        const personId = document.getElementById('personId').value;
+        const url = personId ? `${API_BASE}/persons/${personId}` : `${API_BASE}/persons`;
+        const method = personId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(personData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showMessage('personMessage', `Person ${personId ? 'updated' : 'created'} successfully!`, 'success');
+                resetPersonForm();
+                loadPersons();
+            } else {
+                const error = await response.json();
+                showMessage('personMessage', `Error: ${error.error || response.statusText}`, 'error');
+            }
+        } catch (error) {
+            showMessage('personMessage', 'Error: ' + error.message, 'error');
+        }
+    });
+
+    async function editPerson(id) {
+        try {
+            const response = await fetch(`${API_BASE}/persons/${id}`);
+            const person = await response.json();
+
+            document.getElementById('personId').value = person.id;
+            document.getElementById('personName').value = person.name;
+            document.getElementById('personEyeColor').value = person.eyeColor || '';
+            document.getElementById('personHairColor').value = person.hairColor;
+            document.getElementById('locationX').value = person.location.x;
+            document.getElementById('locationY').value = person.location.y;
+            document.getElementById('locationZ').value = person.location.z;
+            document.getElementById('personPassportID').value = person.passportID;
+            document.getElementById('personNationality').value = person.nationality || '';
+
+            document.getElementById('personFormTitle').textContent = 'Edit Person';
+            document.getElementById('personSubmit').textContent = 'Update Person';
+
+            switchTab('persons');
+        } catch (error) {
+            showMessage('personMessage', 'Error loading person: ' + error.message, 'error');
+        }
+    }
+
+    async function deletePerson(id) {
+        try {
+            const dragonsResponse = await fetch(`${API_BASE}/dragons?size=1000`);
+            const dragonsResult = await dragonsResponse.json();
+            const allDragons = dragonsResult.data || [];
+
+            const isKiller = allDragons.some(dragon =>
+                dragon.killer && dragon.killer.id === id
+            );
+
+            if (isKiller) {
+                alert('Cannot delete this person because they are the killer of one or more dragons.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this person?')) return;
+
+            const response = await fetch(`${API_BASE}/persons/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                showMessage('personMessage', 'Person deleted successfully!', 'success');
+                loadPersons();
+            } else {
+                const error = await response.json();
+                showMessage('personMessage', `Error: ${error.error || response.statusText}`, 'error');
+            }
+        } catch (error) {
+            showMessage('personMessage', 'Error deleting person: ' + error.message, 'error');
+        }
+    }
+
+    function resetPersonForm() {
+        document.getElementById('personForm').reset();
+        document.getElementById('personId').value = '';
+        document.getElementById('personFormTitle').textContent = 'Create New Person';
+        document.getElementById('personSubmit').textContent = 'Create Person';
+        document.getElementById('personMessage').innerHTML = '';
+    }
+
+    async function getSumOfAges() {
+        try {
+            const response = await fetch(`${API_BASE}/dragons/special/sum-ages`);
+            const result = await response.json();
+            document.getElementById('specialResults').innerHTML =
+                `<p><strong>Sum of all dragons ages:</strong> ${result.sumOfAges || 0}</p>`;
+        } catch (error) {
+            document.getElementById('specialResults').innerHTML =
+                `<p class="error">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function getUniqueAges() {
+        try {
+            const response = await fetch(`${API_BASE}/dragons/special/unique-ages`);
+            const ages = await response.json();
+            document.getElementById('specialResults').innerHTML =
+                `<p><strong>Unique dragons ages:</strong> ${ages.join(', ') || 'None'}</p>`;
+        } catch (error) {
+            document.getElementById('specialResults').innerHTML =
+                `<p class="error">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function getDragonsByWeight() {
+        const weight = document.getElementById('weightFilter').value;
+        try {
+            const response = await fetch(`${API_BASE}/dragons/special/weight-greater-than/${weight}`);
+            const dragons = await response.json();
+
+            let html = `<p><strong>Dragons heavier than ${weight}:</strong></p>`;
+            if (dragons.length === 0) {
+                html += '<p>No dragons found</p>';
+            } else {
+                html += '<ul>';
+                dragons.forEach(dragon => {
+                    html += `<li>${dragon.name} (Weight: ${dragon.weight}, Age: ${dragon.age})</li>`;
+                });
+                html += '</ul>';
+            }
+
+            document.getElementById('specialResults').innerHTML = html;
+        } catch (error) {
+            document.getElementById('specialResults').innerHTML =
+                `<p class="error">Error: ${error.message}</p>`;
+        }
+    }
+
+    document.getElementById('importForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const fileInput = document.getElementById('jsonFile');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            showMessage('importMessage', 'Please select a file', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('filename', file.name);
+
+        try {
+            showMessage('importMessage', 'Importing... Please wait.', 'info');
+
+            const response = await fetch(`${API_BASE}/import/dragons`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'FAILED') {
+                showMessage('importMessage',
+                    'Import failed. Check import history for details.',
+                    'error');
+            } else if (result.status === 'PARTIAL_SUCCESS') {
+                showMessage('importMessage',
+                    'Import partially completed. Check import history for details.',
+                    'warning');
+            } else if (result.status === 'SUCCESS') {
+                showMessage('importMessage',
+                    `Import successful! Processed ${result.recordsProcessed || 0} record(s).`,
+                    'success');
+            } else {
+                showMessage('importMessage',
+                    `Import completed with status: ${result.status}.`,
+                    'info');
+            }
+
+            switchTab('import');
+            loadImportHistory();
+
+            loadDragons(currentDragonPage);
+            fileInput.value = '';
+
+        } catch (error) {
+            showMessage('importMessage', 'Network error during import: ' + error.message, 'error');
+        }
+    });
+
+    function downloadTemplate() {
+        const templateElement = document.getElementById('jsonTemplate');
+        templateElement.style.display = templateElement.style.display === 'none' ? 'block' : 'none';
+
+        const templateContent = `[
+  {
+    "name": "Firestorm",
+    "coordinates": {
+      "x": 100,
+      "y": 200
+    },
+    "age": 150,
+    "weight": 2500.5,
+    "color": "BLUE",
+    "character": "EVIL",
+    "cave": {
+      "numberOfTreasures": 50
+    },
+    "head": {
+      "toothCount": 45.5
+    }
+  },
+  {
+    "name": "Icewing",
+    "coordinates": {
+      "x": -50,
+      "y": 300
+    },
+    "age": 200,
+    "weight": 1800.0,
+    "color": "WHITE",
+    "character": "GOOD",
+    "cave": {
+      "numberOfTreasures": 30
+    }
+  }
+]`;
+
+        const blob = new Blob([templateContent], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'dragons_import_template.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function loadImportHistory() {
+        try {
+            const response = await fetch(`${API_BASE}/import/history`);
+            const history = await response.json();
+            displayImportHistory(history);
+        } catch (error) {
+            console.error('Error loading import history:', error);
+            showMessage('importMessage', 'Error loading import history: ' + error.message, 'error');
+        }
+    }
+
+    function displayImportHistory(history) {
+        const container = document.getElementById('importHistory');
+
+        if (!history || history.length === 0) {
+            container.innerHTML = '<p>No import history found</p>';
+            return;
+        }
+
+        container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                    <th>Filename</th>
+                    <th>Records</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${history.map(record => `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${new Date(record.startTime).toLocaleString()}</td>
+                        <td>${record.endTime ? new Date(record.endTime).toLocaleString() : '-'}</td>
+                        <td style="color: ${getStatusColor(record.status)}; font-weight: bold">
+                            ${record.status}
+                        </td>
+                        <td>${record.filename || '-'}</td>
+                        <td style="text-align: center;">${record.recordsProcessed !== null ? record.recordsProcessed : '-'}</td>
+                        <td style="max-width: 400px;">
+                            ${record.errorMessage ?
+            `<div style="max-height: 100px; overflow-y: auto; padding: 3px; font-size: 12px;">
+                                    ${escapeHtml(record.errorMessage)}
+                                </div>`
+            : '-'}
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showErrorDetails(importId, errorMessage) {
+        alert(`Import ID: ${importId}\n\nError Details:\n${errorMessage}`);
+    }
+
+    function getStatusColor(status) {
+        switch (status) {
+            case 'SUCCESS': return 'green';
+            case 'PARTIAL_SUCCESS': return 'orange';
+            case 'FAILED': return 'red';
+            case 'IN_PROGRESS': return 'blue';
+            default: return 'black';
+        }
+    }
+
+    function showMessage(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        const color = type === 'error' ? '#d32f2f' :
+            type === 'success' ? '#388e3c' :
+                type === 'warning' ? '#f57c00' : '#1976d2';
+
+        element.innerHTML = `
+        <div style="
+            background: ${color}15;
+            border: 1px solid ${color}30;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin: 10px 0;
+            color: ${color};
+            font-weight: 500;
+        ">
+            ${message}
+        </div>
+    `;
+
+        setTimeout(() => {
+            if (element.innerHTML.includes(message)) {
+                element.innerHTML = '';
+            }
+        }, 5000);
+    }
+
+    window.onload = function() {
+        loadDragons();
+        loadPersons();
+    };
+</script>
+</body>
+</html>

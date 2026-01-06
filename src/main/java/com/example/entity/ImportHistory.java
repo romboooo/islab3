@@ -30,6 +30,15 @@ public class ImportHistory {
     @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
+    @Column(name = "file_object_key")
+    private String fileObjectKey;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "file_url", length = 1000)
+    private String fileUrl;
+
     public ImportHistory() {}
 
     public ImportHistory(LocalDateTime startTime, ImportStatus status, String filename) {
@@ -58,4 +67,14 @@ public class ImportHistory {
 
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+
+
+    public String getFileObjectKey() { return fileObjectKey; }
+    public void setFileObjectKey(String fileObjectKey) { this.fileObjectKey = fileObjectKey; }
+
+    public Long getFileSize() { return fileSize; }
+    public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 }
