@@ -8,8 +8,8 @@
 
     <!-- Объявление JNDI ресурса для Payara -->
     <resource-ref>
-        <description>PostgreSQL DataSource</description>
-        <res-ref-name>jdbc/hikariPostgres</res-ref-name>
+        <description>PostgreSQL DataSource - встроенный пул Payara</description>
+        <res-ref-name>jdbc/postgres</res-ref-name>
         <res-type>javax.sql.DataSource</res-type>
         <res-auth>Container</res-auth>
         <res-sharing-scope>Shareable</res-sharing-scope>

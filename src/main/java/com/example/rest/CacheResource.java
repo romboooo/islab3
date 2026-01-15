@@ -1,6 +1,7 @@
 package com.example.rest;
 
 import com.example.entity.Person;
+import com.example.service.CacheStatisticsService;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -18,6 +19,9 @@ public class CacheResource {
 
     @PersistenceContext(unitName = "myPU")
     private EntityManager entityManager;
+
+    @Inject
+    private CacheStatisticsService cacheStatisticsService;
 
     @GET
     @Path("/test")
@@ -214,23 +218,62 @@ public class CacheResource {
         return Response.ok(stats).build();
     }
 
+    /**
+     * Включить логирование статистики L2 JPA Cache (cache hits, cache misses)
+     */
     @POST
     @Path("/statistics/enable")
     public Response enableStatistics() {
-        System.setProperty("cache.statistics.enabled", "true");
+        if (cacheStatisticsService != null) {
+            cacheStatisticsService.enableLogging();
+            return Response.ok(Map.of(
+                    "status", "success",
+                    "message", "Cache statistics logging enabled",
+                    "loggingEnabled", true
+            )).build();
+        }
         return Response.ok(Map.of(
-                "status", "success",
-                "message", "Cache statistics logging enabled"
+                "status", "error",
+                "message", "CacheStatisticsService not available"
         )).build();
     }
 
+    /**
+     * Отключить логирование статистики L2 JPA Cache
+     */
     @POST
     @Path("/statistics/disable")
     public Response disableStatistics() {
-        System.setProperty("cache.statistics.enabled", "false");
+        if (cacheStatisticsService != null) {
+            cacheStatisticsService.disableLogging();
+            return Response.ok(Map.of(
+                    "status", "success",
+                    "message", "Cache statistics logging disabled",
+                    "loggingEnabled", false
+            )).build();
+        }
         return Response.ok(Map.of(
-                "status", "success",
-                "message", "Cache statistics logging disabled"
+                "status", "error",
+                "message", "CacheStatisticsService not available"
+        )).build();
+    }
+
+    /**
+     * Получить текущее состояние логирования статистики кэша
+     */
+    @GET
+    @Path("/statistics/status")
+    public Response getStatisticsStatus() {
+        if (cacheStatisticsService != null) {
+            return Response.ok(Map.of(
+                    "status", "success",
+                    "loggingEnabled", cacheStatisticsService.isLoggingEnabled(),
+                    "currentStatus", cacheStatisticsService.getStatus()
+            )).build();
+        }
+        return Response.ok(Map.of(
+                "status", "error",
+                "message", "CacheStatisticsService not available"
         )).build();
     }
 
