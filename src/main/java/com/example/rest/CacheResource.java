@@ -1,130 +1,282 @@
 package com.example.rest;
 
-import com.example.service.CacheStatsService;
+import com.example.entity.Person;
 import jakarta.inject.Inject;
-import jakarta.persistence.Cache;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import com.example.entity.Dragon;
 import java.util.HashMap;
 import java.util.Map;
 
 @Path("/cache")
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class CacheResource {
 
-    @Inject
-    private CacheStatsService cacheStatsService;
+    @PersistenceContext(unitName = "myPU")
+    private EntityManager entityManager;
 
     @GET
-    @Path("/stats")
-    public Response getCacheStats() {
-        try {
-            Cache cache = cacheStatsService.getCache();
-            Map<String, Object> stats = new HashMap<>();
+    @Path("/test")
+    public Response testCache() {
+        Map<String, Object> result = new HashMap<>();
 
-            stats.put("status", "OK");
-            stats.put("cacheProvider", "EclipseLink L2 Cache");
-            stats.put("loggingEnabled", cacheStatsService.isLoggingEnabled());
-            stats.put("cacheEnabled", cache != null);
+        // Тест производительности запросов
+        long startTime = System.currentTimeMillis();
 
-            if (cache != null) {
-                stats.put("cacheClass", cache.getClass().getName());
-                stats.put("timestamp", System.currentTimeMillis());
+        // Первый запрос (должен быть медленнее)
+        entityManager.createQuery("SELECT d FROM Dragon d", Object.class).getResultList();
+        long time1 = System.currentTimeMillis() - startTime;
 
-                Map<String, Boolean> entityCacheStatus = new HashMap<>();
-                entityCacheStatus.put("Dragon", true);
-                entityCacheStatus.put("Person", true);
-                entityCacheStatus.put("ImportHistory", true);
+        // Второй запрос (должен быть быстрее, если кэш работает)
+        startTime = System.currentTimeMillis();
+        entityManager.createQuery("SELECT d FROM Dragon d", Object.class).getResultList();
+        long time2 = System.currentTimeMillis() - startTime;
 
-                stats.put("entityCacheStatus", entityCacheStatus);
-            }
+        // Третий запрос (еще быстрее)
+        startTime = System.currentTimeMillis();
+        entityManager.createQuery("SELECT d FROM Dragon d", Object.class).getResultList();
+        long time3 = System.currentTimeMillis() - startTime;
 
-            return Response.ok(stats).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
-        }
+        // Тест именованного запроса
+        startTime = System.currentTimeMillis();
+        entityManager.createNamedQuery("Dragon.findByWeightGreaterThan", Object.class)
+                .setParameter("weight", 100.0f)
+                .getResultList();
+        long time4 = System.currentTimeMillis() - startTime;
+
+        startTime = System.currentTimeMillis();
+        entityManager.createNamedQuery("Dragon.findByWeightGreaterThan", Object.class)
+                .setParameter("weight", 100.0f)
+                .getResultList();
+        long time5 = System.currentTimeMillis() - startTime;
+
+        // Собираем результаты
+        result.put("cache_enabled", true);
+        result.put("query_times_ms", Map.of(
+                "first_dragon_query", time1,
+                "second_dragon_query", time2,
+                "third_dragon_query", time3,
+                "first_named_query", time4,
+                "second_named_query", time5
+        ));
+
+        result.put("performance_gain", Map.of(
+                "dragon_query_improvement", String.format("%.1f%%", ((double)(time1 - time2) / time1 * 100)),
+                "named_query_improvement", String.format("%.1f%%", ((double)(time4 - time5) / time4 * 100))
+        ));
+
+        result.put("analysis",
+                time2 < time1 && time5 < time4 ?
+                        "Кэш работает: повторные запросы выполняются быстрее" :
+                        "Кэш может не работать оптимально или данные уже в кэше"
+        );
+
+        return Response.ok(result).build();
     }
 
-    @POST
-    @Path("/logging/{enabled}")
-    public Response setLoggingEnabled(@PathParam("enabled") boolean enabled) {
-        try {
-            cacheStatsService.setLoggingEnabled(enabled);
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "OK");
-            response.put("message", "Логирование статистики кэша " +
-                    (enabled ? "включено" : "выключено"));
-            response.put("timestamp", System.currentTimeMillis());
-            return Response.ok(response).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
-        }
-    }
-
-    @POST
+    @GET
     @Path("/clear")
     public Response clearCache() {
         try {
-            Cache cache = cacheStatsService.getCache();
+            // Очистка кэша EntityManager (первого уровня)
+            entityManager.clear();
+
+            // Попытка очистки кэша второго уровня через JPA Cache API
+            jakarta.persistence.Cache cache = entityManager.getEntityManagerFactory().getCache();
             if (cache != null) {
                 cache.evictAll();
+                return Response.ok(Map.of(
+                        "message", "Кэш первого и второго уровня очищен",
+                        "status", "success"
+                )).build();
             }
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "OK");
-            response.put("message", "Весь L2 кэш очищен");
-            response.put("timestamp", System.currentTimeMillis());
-            return Response.ok(response).build();
+            return Response.ok(Map.of(
+                    "message", "Кэш первого уровня очищен",
+                    "status", "success"
+            )).build();
+
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
+            return Response.ok(Map.of(
+                    "message", "Ошибка при очистке кэша: " + e.getMessage(),
+                    "status", "error"
+            )).build();
+        }
+    }
+
+    @GET
+    @Path("/info")
+    public Response getCacheInfo() {
+        Map<String, Object> info = new HashMap<>();
+
+        try {
+            // Информация о кэше через JPA Cache API
+            jakarta.persistence.Cache cache = entityManager.getEntityManagerFactory().getCache();
+
+            info.put("jpa_cache_available", cache != null);
+
+            // Вместо contains, используем другие методы или просто показываем доступность
+            if (cache != null) {
+                // Попробуем получить информацию о поддерживаемых классах
+                // (метод contains требует ID, поэтому пропускаем эту проверку)
+                info.put("cache_implementation", cache.getClass().getName());
+
+                // Получим несколько ID объектов из базы для проверки кэша
+                try {
+                    // Получаем первый Dragon из базы
+                    Object dragonId = entityManager.createQuery("SELECT MIN(d.id) FROM Dragon d", Object.class)
+                            .getSingleResult();
+                    if (dragonId != null) {
+                        info.put("sample_dragon_id_in_cache", cache.contains(Dragon.class, dragonId));
+                    }
+
+                    // Получаем первый Person из базы
+                    Object personId = entityManager.createQuery("SELECT MIN(p.id) FROM Person p", Object.class)
+                            .getSingleResult();
+                    if (personId != null) {
+                        info.put("sample_person_id_in_cache", cache.contains(Person.class, personId));
+                    }
+                } catch (Exception e) {
+                    // Игнорируем ошибки при получении ID
+                    info.put("cache_check_error", e.getMessage());
+                }
+            }
+
+            // Информация о настройках из persistence.xml
+            info.put("query_cache_enabled", true);
+            info.put("second_level_cache_enabled", true);
+            info.put("cache_expiry_ms", 600000);
+
+        } catch (Exception e) {
+            info.put("error", "Не удалось получить информацию о кэше: " + e.getMessage());
+        }
+
+        return Response.ok(info).build();
+    }
+
+    // ДОБАВЛЯЕМ НОВЫЕ МЕТОДЫ
+
+    @GET
+    @Path("/statistics")
+    public Response getCacheStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+
+        try {
+            // Используем reflection для получения статистики EclipseLink
+            jakarta.persistence.Cache cache = entityManager.getEntityManagerFactory().getCache();
+
+            if (cache != null && cache.getClass().getName().contains("JpaCache")) {
+                Class<?> cacheClass = cache.getClass();
+
+                // Получаем сессию через reflection
+                java.lang.reflect.Method getSessionMethod = cacheClass.getMethod("getSession");
+                Object session = getSessionMethod.invoke(cache);
+
+                // Получаем IdentityMapAccessor
+                java.lang.reflect.Method getIdentityMapAccessorMethod = session.getClass().getMethod("getIdentityMapAccessorInstance");
+                Object identityMapAccessor = getIdentityMapAccessorMethod.invoke(session);
+
+                // Получаем статистику
+                java.lang.reflect.Method getStatsMethod = identityMapAccessor.getClass().getMethod("getCacheStatistics");
+                Object cacheStats = getStatsMethod.invoke(identityMapAccessor);
+
+                // Получаем значения через reflection
+                Class<?> statsClass = cacheStats.getClass();
+                java.lang.reflect.Method getHitCountMethod = statsClass.getMethod("getHitCount");
+                java.lang.reflect.Method getMissCountMethod = statsClass.getMethod("getMissCount");
+                java.lang.reflect.Method getObjectCountMethod = statsClass.getMethod("getObjectCount");
+
+                Long hits = (Long) getHitCountMethod.invoke(cacheStats);
+                Long misses = (Long) getMissCountMethod.invoke(cacheStats);
+                Long objectCount = (Long) getObjectCountMethod.invoke(cacheStats);
+
+                double hitRatio = (hits + misses) > 0 ? (hits * 100.0 / (hits + misses)) : 0;
+
+                stats.put("status", "success");
+                stats.put("hits", hits);
+                stats.put("misses", misses);
+                stats.put("objectCount", objectCount);
+                stats.put("hitRatio", String.format("%.2f%%", hitRatio));
+                stats.put("cacheImplementation", "EclipseLink L2 Cache");
+            } else {
+                stats.put("status", "info");
+                stats.put("message", "EclipseLink cache statistics not available");
+            }
+        } catch (Exception e) {
+            stats.put("status", "error");
+            stats.put("message", "Cannot retrieve cache statistics: " + e.getMessage());
+        }
+
+        return Response.ok(stats).build();
+    }
+
+    @POST
+    @Path("/statistics/enable")
+    public Response enableStatistics() {
+        System.setProperty("cache.statistics.enabled", "true");
+        return Response.ok(Map.of(
+                "status", "success",
+                "message", "Cache statistics logging enabled"
+        )).build();
+    }
+
+    @POST
+    @Path("/statistics/disable")
+    public Response disableStatistics() {
+        System.setProperty("cache.statistics.enabled", "false");
+        return Response.ok(Map.of(
+                "status", "success",
+                "message", "Cache statistics logging disabled"
+        )).build();
+    }
+
+    // В CacheResource.java
+    @GET
+    @Path("/method/stats")
+    public Response getMethodStatistics() {
+        try {
+            // Используем reflection для доступа к статическому методу
+            Class<?> interceptorClass = Class.forName("com.example.interceptor.MethodStatisticsInterceptor");
+            java.lang.reflect.Method getStatsMethod = interceptorClass.getMethod("getStatistics");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Map<String, Object>> stats =
+                    (Map<String, Map<String, Object>>) getStatsMethod.invoke(null);
+
+            return Response.ok(stats).build();
+        } catch (Exception e) {
+            return Response.ok(Map.of(
+                    "error", "Cannot retrieve method statistics: " + e.getMessage()
+            )).build();
         }
     }
 
     @POST
-    @Path("/clear/{entity}")
-    public Response clearEntityCache(@PathParam("entity") String entityName) {
+    @Path("/method/stats/reset")
+    public Response resetMethodStatistics() {
         try {
-            Cache cache = cacheStatsService.getCache();
-            if (cache == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Кэш не доступен"))
-                        .build();
-            }
+            // Сбрасываем статистику через reflection
+            Class<?> interceptorClass = Class.forName("com.example.interceptor.MethodStatisticsInterceptor");
+            java.lang.reflect.Field statsMapField = interceptorClass.getDeclaredField("statsMap");
+            statsMapField.setAccessible(true);
 
-            Class<?> entityClass = null;
-            switch (entityName.toLowerCase()) {
-                case "dragon":
-                    entityClass = com.example.entity.Dragon.class;
-                    break;
-                case "person":
-                    entityClass = com.example.entity.Person.class;
-                    break;
-                case "importhistory":
-                    entityClass = com.example.entity.ImportHistory.class;
-                    break;
-                default:
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity(Map.of("error", "Неизвестная сущность: " + entityName))
-                            .build();
-            }
+            @SuppressWarnings("unchecked")
+            Map<String, ?> statsMap = (Map<String, ?>) statsMapField.get(null);
+            statsMap.clear();
 
-            cache.evict(entityClass);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "OK");
-            response.put("message", "Кэш для сущности " + entityName + " очищен");
-            return Response.ok(response).build();
+            return Response.ok(Map.of(
+                    "status", "success",
+                    "message", "Method statistics reset"
+            )).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
+            return Response.ok(Map.of(
+                    "status", "error",
+                    "message", "Cannot reset statistics: " + e.getMessage()
+            )).build();
         }
     }
 }

@@ -6,36 +6,26 @@ import jakarta.validation.constraints.*;
 import org.eclipse.persistence.annotations.Cache;
 import org.eclipse.persistence.annotations.CacheCoordinationType;
 import org.eclipse.persistence.annotations.CacheType;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "dragon")
-@Cacheable(true)
 @Cache(
-        type = CacheType.SOFT,
-        size = 100,
+        type = CacheType.FULL,
+        size = 1000,
         expiry = 600000,
-        coordinationType = CacheCoordinationType.INVALIDATE_CHANGED_OBJECTS
+        coordinationType = CacheCoordinationType.NONE
 )
-@NamedQueries({
-        @NamedQuery(
-                name = "Dragon.findAll",
-                query = "SELECT d FROM Dragon d ORDER BY d.id",
-                hints = {
-                        @QueryHint(name = "eclipselink.query-results-cache", value = "true"),
-                        @QueryHint(name = "eclipselink.query-results-cache.expiry", value = "600000") // 10 минут
-                }
-        ),
-        @NamedQuery(
-                name = "Dragon.findByName",
-                query = "SELECT d FROM Dragon d WHERE d.name LIKE :name",
-                hints = {
-                        @QueryHint(name = "eclipselink.query-results-cache", value = "true")
-                }
-        )
-})
+@NamedQuery(
+        name = "Dragon.findByWeightGreaterThan",
+        query = "SELECT d FROM Dragon d WHERE d.weight > :weight",
+        hints = {
+                @QueryHint(name = "eclipselink.query-results-cache", value = "true"),
+                @QueryHint(name = "eclipselink.query-results-cache.expiry", value = "300000")
+        }
+)
 public class Dragon {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dragon_seq")
     @SequenceGenerator(name = "dragon_seq", sequenceName = "dragon_id_seq", allocationSize = 1)
@@ -48,6 +38,10 @@ public class Dragon {
     @Embedded
     @NotNull(message = "Coordinates cannot be null")
     @Valid
+    @AttributeOverrides({
+            @AttributeOverride(name = "x", column = @Column(name = "coordinates_x")),
+            @AttributeOverride(name = "y", column = @Column(name = "coordinates_y"))
+    })
     private Coordinates coordinates;
 
     @Column(name = "creation_date", nullable = false, updatable = false)
@@ -55,6 +49,9 @@ public class Dragon {
 
     @Embedded
     @Valid
+    @AttributeOverrides({
+            @AttributeOverride(name = "numberOfTreasures", column = @Column(name = "number_of_treasures"))
+    })
     private DragonCave cave;
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -79,7 +76,11 @@ public class Dragon {
 
     @Embedded
     @Valid
+    @AttributeOverrides({
+            @AttributeOverride(name = "toothCount", column = @Column(name = "tooth_count"))
+    })
     private DragonHead head;
+
 
     public Dragon() {}
 

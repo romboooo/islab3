@@ -1,13 +1,18 @@
 package com.example.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class Location {
+    @Column(name = "location_x")
     private long x;
-    private double y;
-    private long z;
 
+    @Column(name = "location_y")
+    private double y;
+
+    @Column(name = "location_z")
+    private long z;
     public Location() {}
 
     public Location(long x, double y, long z) {

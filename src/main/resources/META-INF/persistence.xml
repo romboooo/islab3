@@ -6,7 +6,6 @@
                                  https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
     <persistence-unit name="myPU" transaction-type="JTA">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-        <jta-data-source>jdbc/__default</jta-data-source>
 
         <class>com.example.entity.Dragon</class>
         <class>com.example.entity.Person</class>
@@ -20,24 +19,44 @@
         <class>com.example.entity.DragonCharacter</class>
         <class>com.example.entity.ImportStatus</class>
 
+        <shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>
+
         <properties>
-            <property name="jakarta.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/>
+            <!-- L2 Cache Basic Configuration -->
             <property name="eclipselink.cache.shared.default" value="true"/>
             <property name="eclipselink.cache.type.default" value="SoftWeak"/>
             <property name="eclipselink.cache.size.default" value="1000"/>
-            <property name="eclipselink.cache.default-expiry" value="600000"/>
-            <property name="eclipselink.cache.statistics" value="true"/>
+            
+            <!-- Query Cache -->
             <property name="eclipselink.query-results-cache" value="true"/>
-            <property name="eclipselink.query-results-cache.expiry" value="300000"/>
-            <property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
+            <property name="eclipselink.query-results-cache.expiry" value="60000"/>
+            
+            <!-- Enable Cache Statistics -->
+            <property name="eclipselink.cache-usage" value="CheckCacheThenDatabase"/>
+            <property name="eclipselink.cache.statistics" value="true"/>
+            
+            <!-- PostgreSQL specific -->
+            <property name="eclipselink.target-database" value="PostgreSQL"/>
+            <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+            <property name="eclipselink.jdbc.batch-writing.size" value="100"/>
+            
+            <!-- Logging -->
             <property name="eclipselink.logging.level" value="INFO"/>
             <property name="eclipselink.logging.parameters" value="true"/>
-            <property name="eclipselink.target-database" value="PostgreSQL"/>
-            <property name="eclipselink.target-server" value="org.eclipse.persistence.platform.server.jta.JTATransactionController"/>
-            <property name="eclipselink.cache.shared" value="true"/>
-            <property name="eclipselink.cache.type" value="Full"/>
-            <property name="eclipselink.deploy-on-startup" value="false"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="both"/>
+            <property name="eclipselink.logging.cache" value="FINE"/>
+            
+            <!-- Disable DDL generation -->
+            <property name="eclipselink.ddl-generation" value="none"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+            
+            <!-- JTA properties - важно для Payara -->
+            <property name="eclipselink.target-server" value="WebLogic_10"/>
+            <property name="eclipselink.jta.platform" value="org.eclipse.persistence.transaction.jta.JTATransactionController"/>
+            
+            <!-- Для работы с HikariCP через JNDI -->
+            <property name="eclipselink.connection-pool.default.initial" value="1"/>
+            <property name="eclipselink.connection-pool.default.min" value="3"/>
+            <property name="eclipselink.connection-pool.default.max" value="15"/>
         </properties>
     </persistence-unit>
 </persistence>

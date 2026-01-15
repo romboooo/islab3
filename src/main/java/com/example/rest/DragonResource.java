@@ -103,6 +103,9 @@ public class DragonResource {
     @Path("/special/sum-ages")
     public Response getSumOfAges() {
         Long sum = dragonService.getSumOfAges();
+        if (sum == null) {
+            sum = 0L;
+        }
         return Response.ok(Map.of("sumOfAges", sum)).build();
     }
 

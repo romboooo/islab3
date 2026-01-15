@@ -1,9 +1,11 @@
+-- Создаем последовательности
 CREATE SEQUENCE IF NOT EXISTS dragon_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS person_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS import_history_id_seq START WITH 1 INCREMENT BY 1;
 
+-- Таблица Person
 CREATE TABLE IF NOT EXISTS person (
-                                      id BIGINT PRIMARY KEY DEFAULT nextval('person_id_seq'),
+    id BIGINT PRIMARY KEY DEFAULT nextval('person_id_seq'),
     name VARCHAR(255) NOT NULL,
     eye_color VARCHAR(50),
     hair_color VARCHAR(50) NOT NULL,
@@ -12,67 +14,34 @@ CREATE TABLE IF NOT EXISTS person (
     location_z BIGINT,
     passport_id VARCHAR(255) NOT NULL UNIQUE,
     nationality VARCHAR(50)
-    );
+);
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_name = 'person' AND column_name = 'eye_color') THEN
-ALTER TABLE person ADD COLUMN eye_color VARCHAR(50);
-END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_name = 'person' AND column_name = 'location_z') THEN
-ALTER TABLE person ADD COLUMN location_z BIGINT;
-END IF;
-
-END $$;
-
+-- Таблица Dragon
 CREATE TABLE IF NOT EXISTS dragon (
-                                      id BIGINT PRIMARY KEY DEFAULT nextval('dragon_id_seq'),
+    id BIGINT PRIMARY KEY DEFAULT nextval('dragon_id_seq'),
     name VARCHAR(255) NOT NULL UNIQUE,
     coordinates_x BIGINT,
     coordinates_y DOUBLE PRECISION,
     creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     number_of_treasures BIGINT,
     killer_id BIGINT,
-    age BIGINT NOT NULL,
-    weight FLOAT NOT NULL,
+    age BIGINT NOT NULL CHECK (age > 0),
+    weight FLOAT NOT NULL CHECK (weight > 0),
     color VARCHAR(50),
     dragon_character VARCHAR(50),
-    tooth_count FLOAT,
-    CONSTRAINT fk_killer FOREIGN KEY (killer_id) REFERENCES person(id) ON DELETE SET NULL,
-    CONSTRAINT check_age CHECK (age > 0),
-    CONSTRAINT check_weight CHECK (weight > 0)
-    );
+    tooth_count FLOAT
+);
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_name = 'dragon' AND column_name = 'tooth_count') THEN
-ALTER TABLE dragon ADD COLUMN tooth_count FLOAT;
-END IF;
+-- Внешний ключ для dragon
+ALTER TABLE dragon 
+    ADD CONSTRAINT fk_killer 
+    FOREIGN KEY (killer_id) 
+    REFERENCES person(id) 
+    ON DELETE SET NULL;
 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_name = 'dragon' AND column_name = 'dragon_character') THEN
-ALTER TABLE dragon ADD COLUMN dragon_character VARCHAR(50);
-END IF;
-
-BEGIN
-ALTER TABLE dragon ALTER COLUMN age SET NOT NULL;
-EXCEPTION
-        WHEN others THEN
-END;
-
-BEGIN
-ALTER TABLE dragon ALTER COLUMN weight SET NOT NULL;
-EXCEPTION
-        WHEN others THEN
-END;
-END $$;
-
+-- Таблица ImportHistory
 CREATE TABLE IF NOT EXISTS import_history (
-                                              id BIGINT PRIMARY KEY DEFAULT nextval('import_history_id_seq'),
+    id BIGINT PRIMARY KEY DEFAULT nextval('import_history_id_seq'),
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
     status VARCHAR(50) NOT NULL,
@@ -82,37 +51,14 @@ CREATE TABLE IF NOT EXISTS import_history (
     file_object_key VARCHAR(255),
     file_size BIGINT,
     file_url VARCHAR(1000)
-    );
+);
 
+-- Индексы
 CREATE INDEX IF NOT EXISTS idx_person_name ON person(name);
 CREATE INDEX IF NOT EXISTS idx_person_passport ON person(passport_id);
 CREATE INDEX IF NOT EXISTS idx_dragon_name ON dragon(name);
 CREATE INDEX IF NOT EXISTS idx_dragon_weight ON dragon(weight);
 CREATE INDEX IF NOT EXISTS idx_dragon_killer ON dragon(killer_id);
-CREATE INDEX IF NOT EXISTS idx_import_history_status ON import_history(status);
-CREATE INDEX IF NOT EXISTS idx_import_history_filename ON import_history(filename);
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints
-                   WHERE table_name = 'dragon'
-                   AND constraint_name = 'fk_killer'
-                   AND constraint_type = 'FOREIGN KEY') THEN
-ALTER TABLE dragon
-    ADD CONSTRAINT fk_killer
-        FOREIGN KEY (killer_id) REFERENCES person(id) ON DELETE SET NULL;
-END IF;
-END $$;
-
-COMMIT;
-
-SELECT
-    'Current database state:' as message,
-    (SELECT COUNT(*) FROM person) as person_count,
-    (SELECT COUNT(*) FROM dragon) as dragon_count,
-    (SELECT COUNT(*) FROM import_history) as import_history_count;
-
--- Вставляем данные в таблицу person (людей)
 INSERT INTO person (name, eye_color, hair_color, location_x, location_y, location_z, passport_id, nationality)
 VALUES
     ('Иван Петров', 'BLUE', 'BLOND', 100, 200.5, 300, 'AB123456', 'RUSSIAN'),

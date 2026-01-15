@@ -1,9 +1,11 @@
 package com.example.entity;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Column;
 
 @Embeddable
 public class DragonHead {
+    @Column(name = "tooth_count")
     private Float toothCount;
 
     public DragonHead() {}

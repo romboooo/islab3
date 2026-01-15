@@ -1,13 +1,16 @@
 package com.example.entity;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 
 @Embeddable
 public class Coordinates {
+    @Column(name = "coordinates_x")
     private long x;
 
     @NotNull(message = "Y coordinate cannot be null")
+    @Column(name = "coordinates_y")
     private double y;
 
     public Coordinates() {}

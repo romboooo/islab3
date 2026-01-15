@@ -5,7 +5,6 @@ import com.example.dao.ImportHistoryDao;
 import com.example.dto.DragonDto;
 import com.example.entity.ImportHistory;
 import com.example.entity.ImportStatus;
-import com.example.interceptor.CacheStatsLogging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 @Stateless
-@CacheStatsLogging
 public class ImportService {
 
     @Inject

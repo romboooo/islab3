@@ -5,7 +5,8 @@ import com.example.dao.PersonDao;
 import com.example.dto.DragonDto;
 import com.example.entity.Dragon;
 import com.example.entity.Person;
-import com.example.interceptor.CacheStatsLogging;
+import com.example.interceptor.CacheStatistics;
+import com.example.interceptor.MethodStatistics;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Stateless
-@CacheStatsLogging
+@MethodStatistics
 public class DragonService {
 
     @Inject
@@ -28,34 +29,40 @@ public class DragonService {
 
     @PersistenceContext(unitName = "myPU")
     private EntityManager entityManager;
-
+    @CacheStatistics
+    @MethodStatistics
     public DragonDto findById(Long id) {
         Dragon dragon = dragonDao.findById(id);
         return dragon != null ? new DragonDto(dragon) : null;
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<DragonDto> findAll() {
         return dragonDao.findAll().stream()
                 .map(DragonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<DragonDto> findAllPaginated(int page, int size) {
         return dragonDao.findAllPaginated(page, size).stream()
                 .map(DragonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<DragonDto> findWithFilters(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
         return dragonDao.findWithFilters(filters, page, size, sortBy, sortOrder).stream()
                 .map(DragonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public Long countWithFilters(Map<String, Object> filters) {
         return dragonDao.countWithFilters(filters);
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public DragonDto save(@Valid DragonDto dragonDto) {
         if (dragonDto.getId() == null && !isDragonNameUnique(dragonDto.getName())) {
             throw new RuntimeException("Dragon with name '" + dragonDto.getName() + "' already exists");
@@ -75,7 +82,8 @@ public class DragonService {
         Dragon saved = dragonDao.save(dragon);
         return new DragonDto(saved);
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public void delete(Long id, Long newKillerId) {
         Dragon dragon = dragonDao.findById(id);
         if (dragon != null) {
@@ -93,7 +101,8 @@ public class DragonService {
             dragonDao.delete(id);
         }
     }
-
+    @CacheStatistics
+    @MethodStatistics
     private Dragon convertToEntity(DragonDto dto) {
         Dragon dragon = new Dragon();
         dragon.setId(dto.getId());
@@ -107,25 +116,29 @@ public class DragonService {
         dragon.setHead(dto.getHead());
         return dragon;
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public Long getSumOfAges() {
         return entityManager.createQuery("SELECT SUM(d.age) FROM Dragon d", Long.class)
                 .getSingleResult();
     }
 
 
-
+    @CacheStatistics
+    @MethodStatistics
     public List<DragonDto> findByWeightGreaterThan(Float weight) {
         return dragonDao.findByWeightGreaterThan(weight).stream()
                 .map(DragonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<Long> findUniqueAges() {
         return entityManager.createQuery("SELECT DISTINCT d.age FROM Dragon d ORDER BY d.age", Long.class)
                 .getResultList();
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public boolean isDragonNameUnique(String name) {
         if (name == null || name.trim().isEmpty()) {
             return false;
@@ -136,7 +149,8 @@ public class DragonService {
                 .getSingleResult();
         return count == 0;
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public boolean isDragonNameUnique(String name, Long excludeId) {
         if (name == null || name.trim().isEmpty()) {
             return false;

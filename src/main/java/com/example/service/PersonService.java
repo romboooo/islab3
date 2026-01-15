@@ -4,10 +4,9 @@ import com.example.dao.DragonDao;
 import com.example.dao.PersonDao;
 import com.example.dto.PersonDto;
 import com.example.entity.Person;
-import com.example.entity.Color;
 import com.example.entity.Country;
-import com.example.entity.Location;
-import com.example.interceptor.CacheStatsLogging;
+import com.example.interceptor.CacheStatistics;
+import com.example.interceptor.MethodStatistics;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -15,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Stateless
-@CacheStatsLogging
+@MethodStatistics
 public class PersonService {
 
     @Inject
@@ -23,24 +22,28 @@ public class PersonService {
 
     @Inject
     private DragonDao dragonDao;
-
+    @CacheStatistics
+    @MethodStatistics
     public PersonDto findById(Long id) {
         Person person = personDao.findById(id);
         return person != null ? new PersonDto(person) : null;
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<PersonDto> findAll() {
         return personDao.findAll().stream()
                 .map(PersonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public PersonDto save(@Valid PersonDto personDto) {
         Person person = convertToEntity(personDto);
         Person saved = personDao.save(person);
         return new PersonDto(saved);
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public void delete(Long id) {
         boolean hasDragonReferences = dragonDao.existsByKillerId(id);
 
@@ -51,7 +54,8 @@ public class PersonService {
 
         personDao.delete(id);
     }
-
+    @CacheStatistics
+    @MethodStatistics
     private Person convertToEntity(PersonDto dto) {
         Person person = new Person();
         person.setId(dto.getId());
@@ -64,26 +68,30 @@ public class PersonService {
         return person;
     }
 
-
+    @CacheStatistics
+    @MethodStatistics
     public List<PersonDto> findByName(String name) {
         return personDao.findAll().stream()
                 .filter(person -> person.getName().toLowerCase().contains(name.toLowerCase()))
                 .map(PersonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public List<PersonDto> findByNationality(Country nationality) {
         return personDao.findAll().stream()
                 .filter(person -> nationality.equals(person.getNationality()))
                 .map(PersonDto::new)
                 .collect(Collectors.toList());
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public boolean isPassportIdUnique(String passportId) {
         return personDao.findAll().stream()
                 .noneMatch(person -> person.getPassportID().equals(passportId));
     }
-
+    @CacheStatistics
+    @MethodStatistics
     public boolean isPassportIdUnique(String passportId, Long excludeId) {
         return personDao.findAll().stream()
                 .filter(person -> !person.getId().equals(excludeId))

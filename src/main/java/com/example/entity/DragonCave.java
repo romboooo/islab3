@@ -1,13 +1,14 @@
 package com.example.entity;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Min;
 
 @Embeddable
 public class DragonCave {
     @Min(value = 1, message = "Number of treasures must be greater than 0")
+    @Column(name = "number_of_treasures")
     private long numberOfTreasures;
-
     public DragonCave() {}
 
     public DragonCave(long numberOfTreasures) {

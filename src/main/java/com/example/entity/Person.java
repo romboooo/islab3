@@ -9,24 +9,13 @@ import org.eclipse.persistence.annotations.CacheType;
 
 @Entity
 @Table(name = "person")
-@Cacheable(true)
 @Cache(
-        type = CacheType.SOFT,
-        size = 50,
-        expiry = 300000
+        type = CacheType.FULL,
+        size = 500,
+        expiry = 600000,
+        coordinationType = org.eclipse.persistence.annotations.CacheCoordinationType.NONE
 )
-@NamedQueries({
-        @NamedQuery(
-                name = "Person.findAll",
-                query = "SELECT p FROM Person p ORDER BY p.id",
-                hints = {
-                        @QueryHint(name = "eclipselink.query-results-cache", value = "true"),
-                        @QueryHint(name = "eclipselink.query-results-cache.expiry", value = "300000") // 5 минут
-                }
-        )
-})
 public class Person {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "person_seq")
     @SequenceGenerator(name = "person_seq", sequenceName = "person_id_seq", allocationSize = 1)
@@ -47,6 +36,11 @@ public class Person {
 
     @Embedded
     @NotNull(message = "Location cannot be null")
+    @AttributeOverrides({
+            @AttributeOverride(name = "x", column = @Column(name = "location_x")),
+            @AttributeOverride(name = "y", column = @Column(name = "location_y")),
+            @AttributeOverride(name = "z", column = @Column(name = "location_z"))
+    })
     private Location location;
 
     @NotBlank(message = "Passport ID cannot be null or empty")

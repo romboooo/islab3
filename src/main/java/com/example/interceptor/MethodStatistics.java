@@ -6,6 +6,5 @@ import java.lang.annotation.*;
 @InterceptorBinding
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-@Inherited
-public @interface CacheStatsLogging {
+public @interface MethodStatistics {
 }
