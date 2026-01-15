@@ -21,11 +21,9 @@ public class CacheMonitorService {
         try {
             Cache cache = entityManager.getEntityManagerFactory().getCache();
             logger.info("=== L2 Cache Initialized ===");
-            // Проверяем, что кэш доступен (не null)
             logger.info("Cache is available: " + (cache != null));
             logger.info("Cache implementation: " + (cache != null ? cache.getClass().getName() : "null"));
             
-            // Включим статистику, если это возможно
             if (cache != null) {
                 org.eclipse.persistence.jpa.JpaEntityManager em = 
                     entityManager.unwrap(org.eclipse.persistence.jpa.JpaEntityManager.class);
@@ -57,10 +55,8 @@ public class CacheMonitorService {
             StringBuilder stats = new StringBuilder();
             stats.append("=== L2 Cache Statistics ===\n");
 
-            // Получаем все дескрипторы классов
             for (org.eclipse.persistence.descriptors.ClassDescriptor descriptor :
                     session.getDescriptors().values()) {
-                // Используем IdentityMapAccessor для получения IdentityMap по классу
                 org.eclipse.persistence.internal.identitymaps.IdentityMap cache =
                         ((org.eclipse.persistence.internal.sessions.AbstractSession) session)
                                 .getIdentityMapAccessorInstance().getIdentityMap(descriptor.getJavaClass());

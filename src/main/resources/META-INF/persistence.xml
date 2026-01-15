@@ -11,38 +11,29 @@
         <class>com.example.entity.Person</class>
         <class>com.example.entity.ImportHistory</class>
         <properties>
-            <!-- Настройки базы данных -->
             <property name="eclipselink.target-database" value="PostgreSQL"/>
             <property name="eclipselink.logging.level" value="FINE"/>
             <property name="eclipselink.ddl-generation" value="none"/>
             <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
             
-            <!-- Настройки кэша EclipseLink (L2 Cache) -->
             <property name="eclipselink.cache.shared.default" value="true"/>
             <property name="eclipselink.cache.type.default" value="FULL"/>
             <property name="eclipselink.cache.size.default" value="1000"/>
             
-            <!-- Включение статистики кэша для мониторинга hits/misses -->
             <property name="eclipselink.cache.statistics" value="true"/>
-            <!-- Включение расширенного логирования кэша (hits, misses, population) -->
             <property name="eclipselink.cache.extended.logging" value="true"/>
             
-            <!-- Включение кэша для конкретных сущностей -->
             <property name="eclipselink.cache.shared.Dragon" value="true"/>
             <property name="eclipselink.cache.shared.Person" value="true"/>
             <property name="eclipselink.cache.shared.ImportHistory" value="true"/>
             
-            <!-- Настройки кэша запросов -->
             <property name="eclipselink.query-results-cache" value="true"/>
             <property name="eclipselink.cache-usage.default-query" value="CheckCacheThenDatabase"/>
             
-            <!-- Настройки производительности -->
             <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
             <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
             <property name="eclipselink.persistence-context.flush-mode" value="COMMIT"/>
             
-            <!-- Примечание: Пул соединений управляется Payara через jta-data-source -->
-            <!-- EclipseLink будет использовать встроенный пул Payara автоматически -->
         </properties>
     </persistence-unit>
 </persistence>

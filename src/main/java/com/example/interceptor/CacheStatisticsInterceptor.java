@@ -1,4 +1,3 @@
-// com/example/interceptor/CacheStatisticsInterceptor.java
 package com.example.interceptor;
 
 import com.example.service.CacheStatisticsService;
@@ -6,126 +5,114 @@ import jakarta.inject.Inject;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.InvocationContext;
-import jakarta.persistence.Cache;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import java.lang.reflect.Method;
+import jakarta.annotation.Priority;
 import java.util.logging.Logger;
 
-/**
- * CDI Interceptor для логирования статистики использования L2 JPA Cache
- * Использует CacheStatisticsService для управления состоянием логирования
- */
+@Priority(Interceptor.Priority.APPLICATION)
 @Interceptor
 @CacheStatistics
 public class CacheStatisticsInterceptor {
 
     private static final Logger logger = Logger.getLogger(CacheStatisticsInterceptor.class.getName());
 
-    @PersistenceContext(unitName = "myPU")
-    private EntityManager em;
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_CYAN = "\u001B[36m";
 
     @Inject
     private CacheStatisticsService cacheStatisticsService;
 
+    private long totalHits = 0;
+    private long totalMisses = 0;
+
     @AroundInvoke
     public Object logCacheStatistics(InvocationContext ctx) throws Exception {
+        if (cacheStatisticsService == null || !cacheStatisticsService.isLoggingEnabled()) {
+            return ctx.proceed();
+        }
+
+        String methodName = ctx.getMethod().getName();
+        String className = ctx.getTarget().getClass().getSimpleName();
+        String fullMethodName = className + "." + methodName;
+
+        long startTime = System.nanoTime();
+        boolean[] hadSqlQuery = new boolean[1]; // Для определения был ли SQL
+
+
         try {
             Object result = ctx.proceed();
+            long duration = System.nanoTime() - startTime;
+            double durationMs = duration / 1_000_000.0;
 
-            // Логируем статистику только если включено через сервис
-            if (cacheStatisticsService != null && 
-                cacheStatisticsService.isLoggingEnabled() && 
-                em != null) {
-                logCacheStats(ctx.getMethod().getName());
+            boolean isHit = determineIfCacheHit(methodName, durationMs);
+
+            if (isHit) {
+                totalHits++;
+                logWithColor(String.format(
+                        ANSI_GREEN + "[CACHE HIT]  " + ANSI_RESET +
+                                ANSI_CYAN + "%-40s" + ANSI_RESET +
+                                ANSI_YELLOW + " | Time: %6.2f ms" + ANSI_RESET +
+                                ANSI_GREEN + " | Total Hits: %d" + ANSI_RESET,
+                        fullMethodName, durationMs, totalHits
+                ));
+            } else {
+                totalMisses++;
+                logWithColor(String.format(
+                        ANSI_RED + "[CACHE MISS] " + ANSI_RESET +
+                                ANSI_CYAN + "%-40s" + ANSI_RESET +
+                                ANSI_YELLOW + " | Time: %6.2f ms" + ANSI_RESET +
+                                ANSI_RED + " | Total Misses: %d" + ANSI_RESET,
+                        fullMethodName, durationMs, totalMisses
+                ));
+            }
+
+            if ((totalHits + totalMisses) % 5 == 0) {
+                printOverallStatistics();
             }
 
             return result;
         } catch (Exception e) {
-            // Пробрасываем исключение дальше
+            logWithColor(String.format(
+                    ANSI_RED + "[CACHE ERROR] %s" + ANSI_RESET,
+                    fullMethodName
+            ));
             throw e;
         }
     }
 
-    /**
-     * Логирует статистику использования L2 JPA Cache (cache hits, cache misses)
-     * @param methodName имя метода, для которого логируется статистика
-     */
-    private void logCacheStats(String methodName) {
-        try {
-            // Используем EntityManagerFactory для получения кэша
-            jakarta.persistence.EntityManagerFactory emf = em.getEntityManagerFactory();
-            Cache cache = emf.getCache();
+    private boolean determineIfCacheHit(String methodName, double durationMs) {
 
-            if (cache == null) {
-                logger.warning("Cache is null - L2 cache may not be enabled");
-                return;
-            }
+        return durationMs < 5.0;
+    }
 
-            Class<?> cacheClass = cache.getClass();
-            logger.fine("Cache class: " + cacheClass.getName());
+    private void printOverallStatistics() {
+        long total = totalHits + totalMisses;
+        if (total > 0) {
+            double hitRatio = (totalHits * 100.0) / total;
+            String color = hitRatio > 70 ? ANSI_GREEN :
+                    hitRatio > 30 ? ANSI_YELLOW : ANSI_RED;
 
-            // Проверяем, это EclipseLink JpaCache?
-            if (cacheClass.getName().contains("JpaCache")) {
-                // Получаем сессию через reflection
-                Method getSessionMethod = cacheClass.getMethod("getSession");
-                Object session = getSessionMethod.invoke(cache);
-
-                if (session == null) {
-                    logger.warning("Session is null");
-                    return;
-                }
-
-                // Получаем IdentityMapAccessor
-                Method getIdentityMapAccessorMethod = session.getClass().getMethod("getIdentityMapAccessorInstance");
-                Object identityMapAccessor = getIdentityMapAccessorMethod.invoke(session);
-
-                if (identityMapAccessor == null) {
-                    logger.warning("IdentityMapAccessor is null");
-                    return;
-                }
-
-                // Получаем статистику кэша
-                Method getStatsMethod = identityMapAccessor.getClass().getMethod("getCacheStatistics");
-                Object stats = getStatsMethod.invoke(identityMapAccessor);
-
-                if (stats == null) {
-                    logger.warning("Cache statistics is null - statistics may not be enabled");
-                    return;
-                }
-
-                // Получаем значения через reflection
-                Class<?> statsClass = stats.getClass();
-                Method getHitCountMethod = statsClass.getMethod("getHitCount");
-                Method getMissCountMethod = statsClass.getMethod("getMissCount");
-                Method getObjectCountMethod = statsClass.getMethod("getObjectCount");
-
-                Long hits = (Long) getHitCountMethod.invoke(stats);
-                Long misses = (Long) getMissCountMethod.invoke(stats);
-                Long objectCount = (Long) getObjectCountMethod.invoke(stats);
-
-                // Вычисляем hit ratio
-                double hitRatio = (hits + misses) > 0 ? (hits * 100.0 / (hits + misses)) : 0;
-
-                // Логируем статистику L2 Cache с информацией о методе
-                logger.info(String.format(
-                        "[L2 Cache Statistics] Method: %s | Hits: %d, Misses: %d, Total Objects: %d, Hit Ratio: %.2f%%",
-                        methodName,
-                        hits,
-                        misses,
-                        objectCount,
-                        hitRatio
-                ));
-            } else {
-                logger.warning("Cache implementation is not EclipseLink JpaCache: " + cacheClass.getName());
-            }
-        } catch (NoSuchMethodException e) {
-            logger.warning("Cache statistics API not available: " + e.getMessage() + 
-                    ". Make sure 'eclipselink.cache.statistics' is set to 'true' in persistence.xml");
-        } catch (Exception e) {
-            // Логируем на уровне WARNING для отладки
-            logger.warning("Error retrieving cache statistics: " + e.getMessage());
-            logger.fine("Stack trace: ", e);
+            logWithColor(String.format(
+                    color + "[CACHE STATS]" + ANSI_RESET +
+                            " Hits: " + ANSI_GREEN + "%d" + ANSI_RESET +
+                            ", Misses: " + ANSI_RED + "%d" + ANSI_RESET +
+                            ", Total: %d, " + color + "Hit Ratio: %.1f%%" + ANSI_RESET,
+                    totalHits, totalMisses, total, hitRatio
+            ));
         }
+    }
+
+    private void logWithColor(String message) {
+        System.out.println(message);
+
+        String cleanMessage = message
+                .replace(ANSI_RESET, "")
+                .replace(ANSI_GREEN, "")
+                .replace(ANSI_RED, "")
+                .replace(ANSI_YELLOW, "")
+                .replace(ANSI_CYAN, "");
+        logger.info(cleanMessage);
     }
 }

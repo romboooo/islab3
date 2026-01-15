@@ -23,7 +23,6 @@ public class DatabaseConfig {
         logger.info("=== Инициализация базы данных ===");
 
         try {
-            // Тест через DataSource
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
 
@@ -32,7 +31,6 @@ public class DatabaseConfig {
                 logger.info("✓ Database: " + conn.getMetaData().getDatabaseProductName());
                 logger.info("✓ Version: " + conn.getMetaData().getDatabaseProductVersion());
 
-                // Создаем таблицы если нужно
                 createTablesIfNeeded(conn);
             }
 
@@ -45,7 +43,6 @@ public class DatabaseConfig {
     }
 
     private void createTablesIfNeeded(Connection conn) throws Exception {
-        // Проверяем существование таблиц
         String checkTables = """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 

@@ -6,7 +6,6 @@
          version="6.0">
     <display-name>Dragon Management System</display-name>
 
-    <!-- Объявление JNDI ресурса для Payara -->
     <resource-ref>
         <description>PostgreSQL DataSource - встроенный пул Payara</description>
         <res-ref-name>jdbc/postgres</res-ref-name>

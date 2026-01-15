@@ -19,7 +19,7 @@ import java.util.Map;
 @Stateless
 public class ConnectionPoolResource {
 
-    @Resource(lookup = "jdbc/postgres") // Встроенный пул соединений Payara
+    @Resource(lookup = "jdbc/postgres")
     private DataSource dataSource;
 
     @GET
@@ -40,7 +40,6 @@ public class ConnectionPoolResource {
             result.put("username", metaData.getUserName());
             result.put("connectionIsValid", conn.isValid(5));
             
-            // Проверяем, поддерживает ли пул соединения
             if (dataSource instanceof ConnectionPoolDataSource) {
                 result.put("connectionPoolType", "ConnectionPoolDataSource");
             } else {
@@ -68,16 +67,13 @@ public class ConnectionPoolResource {
         try {
             Connection[] connections = new Connection[connectionsToTest];
             
-            // Пытаемся открыть несколько соединений
             for (int i = 0; i < connectionsToTest; i++) {
                 connections[i] = dataSource.getConnection();
                 result.put("connection_" + i, "acquired");
                 
-                // Проверяем каждое соединение
                 connections[i].createStatement().execute("SELECT " + (i + 1));
             }
             
-            // Закрываем все соединения (должны вернуться в пул)
             for (int i = 0; i < connectionsToTest; i++) {
                 if (connections[i] != null && !connections[i].isClosed()) {
                     connections[i].close();
