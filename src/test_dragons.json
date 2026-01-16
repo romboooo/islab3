@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Firestorm",
+    "coordinates": {
+      "x": 100,
+      "y": 200
+    },
+    "age": 150,
+    "weight": 2500.5,
+    "color": "BLUE",
+    "character": "EVIL",
+    "cave": {
+      "numberOfTreasures": 50
+    },
+    "head": {
+      "toothCount": 45.5
+    }
+  },
+  {
+    "name": "Icewing",
+    "coordinates": {
+      "x": -50,
+      "y": 300
+    },
+    "age": 200,
+    "weight": 1800.0,
+    "color": "WHITE",
+    "character": "GOOD",
+    "cave": {
+      "numberOfTreasures": 30
+    }
+  }
+]

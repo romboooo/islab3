@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: studs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - app-network
+
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO...';
+      sleep 10;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/dragon-imports || true;
+      /usr/bin/mc anonymous set download myminio/dragon-imports;
+      echo 'MinIO настроен';
+      "
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
