@@ -64,6 +64,9 @@ public class DragonService {
     @CacheStatistics
     @MethodStatistics
     public DragonDto save(@Valid DragonDto dragonDto) {
+        if ("true".equals(System.getProperty("db.fail"))) {
+            throw new RuntimeException("Database is unavailable");
+        }
         if (dragonDto.getId() == null && !isDragonNameUnique(dragonDto.getName())) {
             throw new RuntimeException("Dragon with name '" + dragonDto.getName() + "' already exists");
         }

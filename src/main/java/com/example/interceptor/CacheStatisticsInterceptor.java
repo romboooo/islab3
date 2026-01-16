@@ -38,7 +38,7 @@ public class CacheStatisticsInterceptor {
         String fullMethodName = className + "." + methodName;
 
         long startTime = System.nanoTime();
-        boolean[] hadSqlQuery = new boolean[1]; // Для определения был ли SQL
+        boolean[] hadSqlQuery = new boolean[1];
 
 
         try {

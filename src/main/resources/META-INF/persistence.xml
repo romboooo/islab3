@@ -33,7 +33,12 @@
             <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
             <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
             <property name="eclipselink.persistence-context.flush-mode" value="COMMIT"/>
-            
+
+
+            <property name="eclipselink.cache.shared.default" value="true"/>
+            <property name="eclipselink.cache.type.com.example.entity.Dragon" value="SOFT"/>
+            <property name="eclipselink.cache.size.com.example.entity.Dragon" value="1000"/>
+            <property name="eclipselink.cache.expiry.com.example.entity.Dragon" value="3600000"/>
         </properties>
     </persistence-unit>
 </persistence>

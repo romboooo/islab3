@@ -184,3 +184,16 @@ VALUES
     ('Yuki Tanaka', 'BROWN', 'BLACK', 750, 850.2, 950, 'AB987654', 'JAPANESE'),
     ('Wei Chen', 'BLACK', 'BLACK', 800, 900.4, 1000, 'CD543210', 'CHINESE')
     ON CONFLICT (passport_id) DO NOTHING;
+
+CREATE SEQUENCE IF NOT EXISTS distributed_transaction_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS distributed_transaction (
+                                                       id BIGINT PRIMARY KEY DEFAULT nextval('distributed_transaction_id_seq'),
+    transaction_id VARCHAR(255) NOT NULL UNIQUE,
+    status VARCHAR(50) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
+    metadata TEXT
+    );
+CREATE INDEX IF NOT EXISTS idx_transaction_status ON distributed_transaction(status);
+CREATE INDEX IF NOT EXISTS idx_transaction_created ON distributed_transaction(created_at);

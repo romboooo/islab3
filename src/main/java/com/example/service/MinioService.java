@@ -123,31 +123,47 @@ public class MinioService {
         }
     }
 
-    public String uploadFile(byte[] fileContent, String originalFilename, String contentType)
-            throws Exception {
+    public String uploadFile(byte[] fileContent, String originalFilename, String contentType) throws Exception {
+        // Проверяем, не имитируется ли сбой MinIO
+        if ("true".equals(System.getProperty("minio.fail"))) {
+            throw new RuntimeException("MinIO service is unavailable");
+        }
 
         ensureInitialized();
 
-        String objectName = generateObjectName(originalFilename);
+        // Генерируем уникальное имя файла с timestamp для избежания коллизий
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String safeFilename = originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String objectName = "imports/" + timestamp + "_" + safeFilename;
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", contentType);
-        headers.put("X-Amz-Meta-Original-Filename", originalFilename);
-        headers.put("X-Amz-Meta-Uploaded-At", LocalDateTime.now().toString());
-
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(fileContent)) {
+        try (InputStream inputStream = new ByteArrayInputStream(fileContent)) {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(minioConfig.getBucketName())
                             .object(objectName)
-                            .stream(bais, fileContent.length, -1)
+                            .stream(inputStream, fileContent.length, -1)
                             .contentType(contentType)
-                            .headers(headers)
-                            .build());
+                            .build()
+            );
         }
 
-        logger.info("Файл загружен в MinIO: " + objectName + ", размер: " + fileContent.length + " байт");
+        logger.info("Файл загружен в MinIO: " + objectName);
         return objectName;
+    }
+
+    public void deleteFile(String objectName) throws Exception {
+        // Проверяем, не имитируется ли сбой MinIO
+        if ("true".equals(System.getProperty("minio.fail"))) {
+            throw new RuntimeException("MinIO service is unavailable");
+        }
+
+        ensureInitialized();
+        minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                        .bucket(minioConfig.getBucketName())
+                        .object(objectName)
+                        .build());
+        logger.info("Файл удален из MinIO: " + objectName);
     }
 
     public byte[] downloadFile(String objectName) throws Exception {

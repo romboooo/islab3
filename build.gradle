@@ -35,6 +35,8 @@ dependencies {
     implementation 'commons-io:commons-io:2.13.0'
     
     implementation 'jakarta.interceptor:jakarta.interceptor-api:2.1.0'
+
+    implementation 'commons-codec:commons-codec:1.15'
 }
 
 war {
